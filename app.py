@@ -1,18 +1,24 @@
-import smtplib, ssl, csv, yaml
+"""A secret santa generator for groups of families or friends"""
+
 from random import randint
+import smtplib
+import ssl
+import csv
+import yaml
+
 
 with open("config.yml", "r") as ymlfile:
-    config = yaml.load(ymlfile, Loader=yaml.FullLoader)
+    CONFIG = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
 
-port = int(config['port'])
-password = config['password']
-sender_email = config['sender']
-csv_source = config['csv_source']
-host = config['host']
-family_members = []
-random_nums = []
-context = ssl.create_default_context()
+PORT = int(CONFIG['port'])
+PASSWORD = CONFIG['password']
+SENDER_EMAIL = CONFIG['sender']
+CSV_SOURCE = CONFIG['csv_source']
+HOST = CONFIG['host']
+FAMILY_MEMBERS = []
+RANDOM_NUMS = []
+CONTEXT = ssl.create_default_context()
 
 
 class FamilyMember:
@@ -27,15 +33,15 @@ class FamilyMember:
 
 def send_email(server, family_member_list):
     for person in family_member_list:
-        server.sendmail(sender_email,
+        server.sendmail(SENDER_EMAIL,
                         person.email,
                         "You are the secret santa for " + family_member_list[person.assignee].name)
         print("Email sent!")
 
 
 def send(family_member_list):
-    with smtplib.SMTP_SSL(host, port, context=context) as server:
-        server.login(sender_email, password)
+    with smtplib.SMTP_SSL(HOST, PORT, context=CONTEXT) as server:
+        server.login(SENDER_EMAIL, PASSWORD)
         send_email(server, family_member_list)
 
 
@@ -43,26 +49,25 @@ def assign(number, some_member, member_list):
     for item in member_list:
         if number == item.assignee:
             continue
-        else:
-            some_member.assignee = number
-            break
+        some_member.assignee = number
+        break
 
 
-with open(csv_source) as csv_file:
-    csv_reader = csv.reader(csv_file, delimiter=',')
-    for row in csv_reader:
+with open(CSV_SOURCE) as csv_file:
+    CSV_READER = csv.reader(csv_file, delimiter=',')
+    for row in CSV_READER:
         member = FamilyMember(row[0], row[1])
-        family_members.append(member)
+        FAMILY_MEMBERS.append(member)
 
 
-for member in family_members:
-    random_num = randint(0, len(family_members) - 1)
-    while random_num in random_nums or random_num == family_members.index(member):
-        random_num = randint(0, len(family_members) - 1)
-    random_nums.append(random_num)
-    assign(random_num, member, family_members)
+for member in FAMILY_MEMBERS:
+    random_num = randint(0, len(FAMILY_MEMBERS) - 1)
+    while random_num in RANDOM_NUMS or random_num == FAMILY_MEMBERS.index(member):
+        random_num = randint(0, len(FAMILY_MEMBERS) - 1)
+    RANDOM_NUMS.append(random_num)
+    assign(random_num, member, FAMILY_MEMBERS)
 
 
-confirm = input("Ready to send? ")
-if confirm.lower() == "yes":
-    send(family_members)
+CONFIRM = input("Ready to send? ")
+if CONFIRM.lower() == "yes":
+    send(FAMILY_MEMBERS)
