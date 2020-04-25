@@ -1,6 +1,7 @@
 """A secret santa generator for groups of families or friends"""
 
 from random import randint
+import sys
 import smtplib
 import ssl
 import csv
@@ -33,9 +34,11 @@ class FamilyMember:
 
 def send_email(server, family_member_list):
     for person in family_member_list:
-        server.sendmail(SENDER_EMAIL,
-                        person.email,
-                        "You are the secret santa for " + family_member_list[person.assignee].name)
+        subject_text = "Secret Santa Assignment for {}".format(person.name)
+        message_text = "Hello {}! You are the secret santa for {}"\
+            .format(person.name, family_member_list[person.assignee].name)
+        message = "Subject: {}\n\n{}".format(subject_text, message_text)
+        server.sendmail(SENDER_EMAIL, person.email, message)
         print("Email sent!")
 
 
@@ -61,10 +64,16 @@ with open(CSV_SOURCE) as csv_file:
 
 
 for member in FAMILY_MEMBERS:
+    count = 0
     random_num = randint(0, len(FAMILY_MEMBERS) - 1)
     while random_num in RANDOM_NUMS or random_num == FAMILY_MEMBERS.index(member):
         random_num = randint(0, len(FAMILY_MEMBERS) - 1)
+        if count == 3:
+            print("Loop failed, try again!")
+            sys.exit()
+        count += 1
     RANDOM_NUMS.append(random_num)
+    count -= count
     assign(random_num, member, FAMILY_MEMBERS)
 
 
